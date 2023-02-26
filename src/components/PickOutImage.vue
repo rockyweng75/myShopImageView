@@ -24,6 +24,11 @@
       description:{
         type: String,
         require: false,
+      },
+      firstTeaching:{
+        type: Boolean,
+        require: false,
+        default: true
       }
     },
     emits:{
@@ -104,7 +109,6 @@
             isDown.value = true;
             startX.value = e.clientX!;
             startY.value = e.clientY!;
-            console.log('click', downCount.value)
           } 
 
           element.onmousemove = (e: MouseEventInit) =>{
@@ -114,7 +118,6 @@
               isMove.value = true;
               downCount.value = 0;
               clickTime.value = 0;
-              console.log('onmousemove', downCount.value)
             } else {
               isDown.value = false;
             }
@@ -126,9 +129,7 @@
             if(downCount.value > 1 ){
               downCount.value = 0;
               clickTime.value = 0;
-              console.log('doubleDown')
               invokeDoubleClick();
-
             } else {
               invokeMove();
             }
@@ -147,10 +148,14 @@
           } 
         }
 
+        let blankElement = document.querySelector<HTMLDivElement>('.blank-container')
+        blankElement!.onclick = (e: Event)=>{
+          blankElement!.style.display = "none";
+        }
       })
       return {
         img,
-        svg
+        svg,
       }
     }
   }
@@ -166,6 +171,10 @@
     <img id="left-arrow" src="../assets/arrow-small-left-svgrepo-com.svg"/>
     <div class="desc-container" v-if="description">
       {{ description }}
+    </div>
+    <div v-if="firstTeaching" class="blank-container">
+      <div class="left">{{custom.toLocaleLowerCase() === 'right' ? '不喜歡': '喜歡'}}向左滑</div>
+      <div class="right">{{custom.toLocaleLowerCase() === 'right' ? '喜歡': '不喜歡'}}向右滑</div>
     </div>
   </div>
 </template>
@@ -200,7 +209,7 @@
 #right-arrow {
   position: absolute;
   opacity: 0.2;
-  z-index: 999;
+  z-index: 99;
   top: calc(50% - 30px) ;
   right: 10%;
   width: 60px;
@@ -213,7 +222,7 @@
 #left-arrow {
   position: absolute;
   opacity: 0.2;
-  z-index: 999;
+  z-index: 99;
   top: calc(50% - 30px) ;
   left: 10%;
   width: 60px;
@@ -226,7 +235,7 @@
 #like {
   position: absolute;
   opacity: 0.4;
-  z-index: 999;
+  z-index: 99;
   top: 0;
   width: 60px;
 
@@ -235,7 +244,7 @@
 #dislike {
   position: absolute;
   opacity: 0.4;
-  z-index: 999;
+  z-index: 99;
   top: 0;
   width: 60px;
 }
@@ -248,6 +257,34 @@
   height: 20%;
   background-color: rgba(0,0,0,0.3);
   color: white;
+}
+
+.blank-container{
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.7);
+  color: white;
+  z-index: 999;
+}
+
+.blank-container .right, .blank-container .left{
+  position: relative;
+  display: inline-block;
+  height: 100%;
+  width: calc(50% - 4px) ;
+  top: 25%;
+  vertical-align: middle;
+}
+
+.blank-container::before{
+  position: absolute;
+  width: calc(50% - 2px);
+  border-right: 2px dashed white;
+  content: ' ';
+  height: 100%;
 }
 
 </style>

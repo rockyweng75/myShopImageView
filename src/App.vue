@@ -18,7 +18,12 @@ const doubleClick = () =>{
 
 <template>
   <div class="container">
-    <PickOutImage :src="imgSrc" v-on:next="next"  v-on:double-click="doubleClick" style="width: 300px" description="12345678">
+    <PickOutImage 
+      :src="imgSrc"
+      v-on:next="next" 
+      v-on:double-click="doubleClick" 
+      style="width: 300px" 
+      description="12345678">
     </PickOutImage>
   </div>
 </template>
