@@ -21,15 +21,23 @@
         require: false,
         default: 'right',
       },
+      description:{
+        type: String,
+        require: false,
+      }
     },
     emits:{
-      next: Function
+      next: Function,
+      doubleClick: Function
     },
     setup(props,{emit}){
       const img = ref(null)
       const svg = ref(null)
 
       const isDown = ref(false)
+      const downCount = ref(0)
+      const clickTime = ref(0)
+
       const isMove = ref(false)
 
       const startX = ref(0)
@@ -38,21 +46,28 @@
       const moveY = ref(0)
       const status = ref('none')
 
-      const invoke = ()=>{
+      const invokeMove = ()=>{
         if(isDown.value && isMove.value){
           if(Math.abs(startY.value - moveY.value) < Math.abs(startX.value - moveX.value)*1.5){
-            // left
-            if(startX.value - moveX.value > 0){
-              status.value = props.custom.toLocaleLowerCase() === 'right'? 'dislike': 'like';
-              emit('next', status.value);
+            if(Math.abs(startX.value - moveX.value) > 10){
+              // left
+              if(startX.value - moveX.value > 0){
+                status.value = props.custom.toLocaleLowerCase() === 'right'? 'dislike': 'like';
+                emit('next', status.value);
+              }
+              // right
+              if(startX.value - moveX.value < 0){
+                status.value = props.custom.toLocaleLowerCase() === 'right'? 'like': 'dislike';
+                emit('next', status.value);
+              }
             }
-            // right
-            if(startX.value - moveX.value < 0){
-              status.value = props.custom.toLocaleLowerCase() === 'right'? 'like': 'dislike';
-              emit('next', status.value);
-            }
+  
           }
         }
+      }
+
+      const invokeDoubleClick = ()=>{
+        emit('doubleClick');
       }
 
       onMounted(()=>{
@@ -74,37 +89,61 @@
         }
 
         if(element){
+
           element.onmousedown = (e: MouseEvent) =>{
             e.preventDefault();
             e.stopPropagation();
+            if(downCount.value > 0){
+              if((Date.now() - clickTime.value) < 1000){
+                downCount.value += 1;
+              }
+            } else {
+              downCount.value += 1;
+            }
+            clickTime.value = Date.now()
             isDown.value = true;
             startX.value = e.clientX!;
             startY.value = e.clientY!;
+            console.log('click', downCount.value)
           } 
 
-          element.onmousemove = (e: MouseEvent) =>{
-            e.preventDefault();
-            e.stopPropagation();
+          element.onmousemove = (e: MouseEventInit) =>{
             if(isDown.value){
               moveX.value = e.clientX!;
               moveY.value = e.clientY!;
               isMove.value = true;
+              downCount.value = 0;
+              clickTime.value = 0;
+              console.log('onmousemove', downCount.value)
+            } else {
+              isDown.value = false;
             }
           } 
 
           element.onmouseup = (e: MouseEvent) =>{
             e.preventDefault();
             e.stopPropagation();
+            if(downCount.value > 1 ){
+              downCount.value = 0;
+              clickTime.value = 0;
+              console.log('doubleDown')
+              invokeDoubleClick();
 
-            invoke();
+            } else {
+              invokeMove();
+            }
             isDown.value = false;
             startX.value = 0;
           } 
 
           element.onmouseout = (e: MouseEventInit) =>{
-            invoke();
+            invokeMove();
             isDown.value = false;
+            isMove.value = false;
             startX.value = 0;
+            downCount.value = 0;
+            clickTime.value = 0;
+
           } 
         }
 
@@ -125,6 +164,9 @@
     <img id="dislike" src="../assets/dislike-svgrepo-com.svg"/>
     <img id="right-arrow" src="../assets/arrow-small-right-svgrepo-com.svg"/>
     <img id="left-arrow" src="../assets/arrow-small-left-svgrepo-com.svg"/>
+    <div class="desc-container" v-if="description">
+      {{ description }}
+    </div>
   </div>
 </template>
 
@@ -159,9 +201,10 @@
   position: absolute;
   opacity: 0.2;
   z-index: 999;
-  top: 0;
+  top: calc(50% - 30px) ;
   right: 10%;
   width: 60px;
+  height: 60px;
   animation-name: Move2Right;
   animation-duration: 1s;
   animation-iteration-count: infinite;
@@ -171,15 +214,14 @@
   position: absolute;
   opacity: 0.2;
   z-index: 999;
-  top: 0;
+  top: calc(50% - 30px) ;
   left: 10%;
   width: 60px;
+  height: 60px;
   animation-name: Move2Left;
   animation-duration: 1s;
   animation-iteration-count: infinite;
 }
-
-
 
 #like {
   position: absolute;
@@ -196,6 +238,16 @@
   z-index: 999;
   top: 0;
   width: 60px;
+}
+
+.desc-container{
+  position: absolute;
+  bottom: 20%;
+  left: 10%;
+  width: 80%;
+  height: 20%;
+  background-color: rgba(0,0,0,0.3);
+  color: white;
 }
 
 </style>
